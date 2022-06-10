@@ -6,7 +6,7 @@ using UnityEngine;
 
 public class MovementSystem : MonoBehaviour
 {
-
+    [SerializeField] private Transform rotationRef;
     [SerializeField] private float rotateSpeed = 1f;
     [SerializeField] private LayerMask walkableMask;
 
@@ -22,13 +22,14 @@ public class MovementSystem : MonoBehaviour
     void Update()
     {
         if (isMoving) return;
+
         if (Input.GetKeyDown(KeyCode.D)) RollInDirection(Vector3.right);
         else
-        if (Input.GetKeyDown(KeyCode.A)) RollInDirection(Vector3.left);
+        if (Input.GetKeyDown(KeyCode.A)) RollInDirection(Vector3.right * -1);
         else
         if (Input.GetKeyDown(KeyCode.W)) RollInDirection(Vector3.forward);
         else
-        if (Input.GetKeyDown(KeyCode.S)) RollInDirection(Vector3.back);
+        if (Input.GetKeyDown(KeyCode.S)) RollInDirection(Vector3.forward * -1);
     }
 
     private bool CheckSides(Vector3 direction, out Vector3 anchorPos, out int angle)
@@ -39,7 +40,7 @@ public class MovementSystem : MonoBehaviour
         anchorPos = Vector3.down;
         angle = 90;
         Ray ray = new Ray(position, direction);
-        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, walkableMask))
+        if (Physics.Raycast(ray, rayDistance, walkableMask))
         {
             anchorPos = Vector3.up;
             angle *= 2;
@@ -48,7 +49,7 @@ public class MovementSystem : MonoBehaviour
 
         position = position + direction * rayDistance;
         ray = new Ray(position, Vector3.down);
-        if (Physics.Raycast(ray, out hit, rayDistance, walkableMask))
+        if (Physics.Raycast(ray, rayDistance * 2, walkableMask))
         {
             return true;
         }
@@ -61,9 +62,11 @@ public class MovementSystem : MonoBehaviour
     private void RollInDirection(Vector3 direction)
     {
         if (!CheckSides(direction, out Vector3 anchorPos, out int angle)) return;
-
-        Vector3 anchor = transform.position + (anchorPos + Vector3.right) * .5f;
+        float sideSize = Vector3.Scale(renderer.bounds.size, direction).Abs().GetValueByDirection(direction) / 2;
         Vector3 axis = Vector3.Cross(Vector3.up, direction);
+        Vector3 anchor = transform.position + (anchorPos + direction) * sideSize;
+        debug = anchor;
+        anchor.y = (anchorPos == Vector3.down) ? renderer.bounds.min.y : renderer.bounds.max.y;
         StartCoroutine(RollRoutine(anchor, axis, angle));
     }
 
@@ -77,13 +80,13 @@ public class MovementSystem : MonoBehaviour
         }
         isMoving = false;
     }
+    Vector3 debug;
     private void OnDrawGizmos()
     {
         if (renderer == null) renderer = GetComponent<Renderer>();
-        Gizmos.color = Color.green;
-        Vector3 anchor = transform.position + (Vector3.up + Vector3.right) * .5f;
-        Gizmos.DrawSphere(anchor, .1f);
 
+        Gizmos.color = Color.green;
+        Gizmos.DrawSphere(debug, .1f);
         //Vector3 position;
         //GetRaycastPosition(Vector3.right, out position);
 

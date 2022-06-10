@@ -4,8 +4,12 @@ using UnityEngine;
 
 public static class Extensions
 {
-    public static Vector3 Abs(this Vector3 vector)
+    public static Vector3 Abs(this Vector3 v) => new Vector3(Mathf.Abs(v.x), Mathf.Abs(v.y), Mathf.Abs(v.z));
+    public static float GetValueByDirection(this Vector3 v, Vector3 dir)
     {
-        return new Vector3(Mathf.Abs(vector.x), Mathf.Abs(vector.y), Mathf.Abs(vector.z));
+        if (dir.x != 0) return v.x;
+        if (dir.y != 0) return v.y;
+        if (dir.z != 0) return v.z;
+        return 0;
     }
 }
