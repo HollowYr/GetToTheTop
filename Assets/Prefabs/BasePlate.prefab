@@ -12,6 +12,7 @@ GameObject:
   - component: {fileID: 907753398443561570}
   - component: {fileID: 907753398443561573}
   - component: {fileID: -1343559183406371270}
+  - component: {fileID: -7539061316366308970}
   m_Layer: 3
   m_Name: BasePlate
   m_TagString: Untagged
@@ -97,3 +98,17 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1.0000002, z: 6.123235e-17}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &-7539061316366308970
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 907753398443561574}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 48259ba879c07e243b3dbabbf4f7e799, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  activeMat: {fileID: 2100000, guid: 1c0d28c7f45257344bda281e11457f4a, type: 2}
+  inactiveMat: {fileID: 2100000, guid: 22574826619b0134c9eb071e0b894964, type: 2}

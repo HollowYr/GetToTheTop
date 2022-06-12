@@ -9,19 +9,34 @@ public class MovementSystem : MonoBehaviour
     [SerializeField] private Transform rotationRef;
     [SerializeField] private float rotateSpeed = 1f;
     [SerializeField] private LayerMask walkableMask;
+    [SerializeField] private CameraRotation cameraRotation;
 
+    List<BaseState> states = new List<BaseState>();
     private bool isMoving = false;
     Renderer renderer;
     private float rayDistance = .6f;
+    Camera camera;
 
     private void Start()
     {
+        camera = Camera.main;
         renderer = GetComponent<Renderer>();
+        PaintAllSides();
     }
-
+    Ray debugRay;
     void Update()
     {
-        if (isMoving) return;
+
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = camera.ScreenPointToRay(Input.mousePosition);
+            debugRay = ray;
+            if (!Physics.Raycast(ray, out RaycastHit hit, 100, walkableMask)) return;
+            Vector3 diff = hit.transform.position - transform.position;
+            Debug.Log(diff);
+            if (MathF.Abs(diff.x) == 1) RollInDirection(Vector3.right * diff.x);
+            if (MathF.Abs(diff.z) == 1) RollInDirection(Vector3.forward * diff.z);
+        }
 
         if (Input.GetKeyDown(KeyCode.D)) RollInDirection(Vector3.right);
         else
@@ -32,6 +47,49 @@ public class MovementSystem : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.S)) RollInDirection(Vector3.forward * -1);
     }
 
+    private void PaintAllSides()
+    {
+        foreach (BaseState state in states)
+        {
+            state.ResetState();
+        }
+        PaintSide(Vector3.forward);
+        PaintSide(Vector3.back);
+        PaintSide(Vector3.left);
+        PaintSide(Vector3.right);
+    }
+
+    private void PaintSide(Vector3 direction)
+    {
+        Vector3 position;
+        GetRaycastPosition(direction, out position);
+        Ray ray = new Ray(position, direction);
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, walkableMask))
+        {
+            if (hit.transform.TryGetComponent(out BaseState state))
+            {
+                states.Add(state);
+                state.ChangeState(true);
+            }
+
+            return;
+        }
+
+        position = position + direction * rayDistance;
+        ray = new Ray(position, Vector3.down);
+        if (Physics.Raycast(ray, out hit, rayDistance * 2, walkableMask))
+        {
+            if (hit.transform.TryGetComponent(out BaseState state))
+            {
+                states.Add(state);
+                state.ChangeState(true);
+            }
+
+            return;
+        }
+
+    }
+
     private bool CheckSides(Vector3 direction, out Vector3 anchorPos, out int angle)
     {
         Vector3 position;
@@ -40,7 +98,7 @@ public class MovementSystem : MonoBehaviour
         anchorPos = Vector3.down;
         angle = 90;
         Ray ray = new Ray(position, direction);
-        if (Physics.Raycast(ray, rayDistance, walkableMask))
+        if (Physics.Raycast(ray, out RaycastHit hit, rayDistance, walkableMask))
         {
             anchorPos = Vector3.up;
             angle *= 2;
@@ -49,7 +107,7 @@ public class MovementSystem : MonoBehaviour
 
         position = position + direction * rayDistance;
         ray = new Ray(position, Vector3.down);
-        if (Physics.Raycast(ray, rayDistance * 2, walkableMask))
+        if (Physics.Raycast(ray, out hit, rayDistance * 2, walkableMask))
         {
             return true;
         }
@@ -61,11 +119,11 @@ public class MovementSystem : MonoBehaviour
 
     private void RollInDirection(Vector3 direction)
     {
-        if (!CheckSides(direction, out Vector3 anchorPos, out int angle)) return;
+        if (!CheckSides(direction, out Vector3 anchorPos, out int angle) || isMoving) return;
         float sideSize = Vector3.Scale(renderer.bounds.size, direction).Abs().GetValueByDirection(direction) / 2;
         Vector3 axis = Vector3.Cross(Vector3.up, direction);
         Vector3 anchor = transform.position + (anchorPos + direction) * sideSize;
-        debug = anchor;
+        debugPos = anchor;
         anchor.y = (anchorPos == Vector3.down) ? renderer.bounds.min.y : renderer.bounds.max.y;
         StartCoroutine(RollRoutine(anchor, axis, angle));
     }
@@ -78,15 +136,28 @@ public class MovementSystem : MonoBehaviour
             transform.RotateAround(anchor, axis, rotateSpeed);
             yield return new WaitForFixedUpdate();
         }
+        PaintAllSides();
+        RoundPlayerPosition();
         isMoving = false;
     }
-    Vector3 debug;
+
+    private void RoundPlayerPosition()
+    {
+        Vector3 roundedPosition = transform.position;
+        roundedPosition.x = MathF.Round(roundedPosition.x);
+        //roundedPosition.y = MathF.Round(roundedPosition.y);
+        roundedPosition.z = MathF.Round(roundedPosition.z);
+        transform.position = roundedPosition;
+    }
+
+    Vector3 debugPos;
     private void OnDrawGizmos()
     {
         if (renderer == null) renderer = GetComponent<Renderer>();
 
         Gizmos.color = Color.green;
-        Gizmos.DrawSphere(debug, .1f);
+        Gizmos.DrawRay(debugRay);
+        Gizmos.DrawSphere(debugPos, .1f);
         //Vector3 position;
         //GetRaycastPosition(Vector3.right, out position);
 

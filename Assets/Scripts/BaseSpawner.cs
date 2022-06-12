@@ -4,6 +4,7 @@ using UnityEngine;
 
 public class BaseSpawner : MonoBehaviour
 {
+    [SerializeField] private Transform parent;
     [SerializeField] private GameObject spawnObj;
     [SerializeField] private Material firstMat;
     [SerializeField] private Material secondMat;
@@ -11,17 +12,17 @@ public class BaseSpawner : MonoBehaviour
     [ContextMenu("Spawn")]
     private void Spawn()
     {
-        int childCount = transform.childCount;
+        int childCount = parent.childCount;
         for (int i = 0; i < childCount; i++)
         {
-            DestroyImmediate(transform.GetChild(0).gameObject);
+            DestroyImmediate(parent.GetChild(0).gameObject);
         }
 
         for (int y = 0, i = 0; y < size.y; y++)
         {
             for (int x = 0; x < size.x; x++, i++)
             {
-                Transform basePlate = Instantiate(spawnObj, transform).transform;
+                Transform basePlate = Instantiate(spawnObj, parent).transform;
                 basePlate.gameObject.name = spawnObj.name + "_" + i;
                 Renderer renderer = basePlate.GetComponent<Renderer>();
                 if ((x + y) % 2 == 0)
@@ -29,7 +30,7 @@ public class BaseSpawner : MonoBehaviour
                 else
                     renderer.material = secondMat;
 
-                basePlate.position = transform.position + new Vector3(x, 0, (-1) * y);
+                basePlate.position = parent.position + new Vector3(x, 0, (-1) * y);
             }
         }
     }
